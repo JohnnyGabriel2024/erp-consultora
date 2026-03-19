@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if factura else 'Nueva' }} Factura{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4><i class="fas fa-file-invoice me-2"></i>
+                    {{ 'Editar' if factura else 'Nueva' }} Factura
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="facturaForm">
+                    <!-- Datos del proyecto (solo si es nueva) -->
+                    {% if not factura %}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="proyecto_id" class="form-label">Proyecto *</label>
+                            <select class="form-select" id="proyecto_id" name="proyecto_id" required>
+                                <option value="">Seleccionar proyecto...</option>
+                                {% for proyecto in proyectos %}
+                                <option value="{{ proyecto.id }}" 
+                                        data-cliente="{{ proyecto.cliente.nombre_empresa }}"
+                                        data-responsable="{{ proyecto.responsable.nombre }}">
+                                    {{ proyecto.nombre }} - {{ proyecto.cliente.nombre_empresa }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Cliente</label>
+                            <input type="text" class="form-control" id="cliente_readonly" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Responsable</label>
+                            <input type="text" class="form-control" id="responsable_readonly" readonly>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Cabecera de factura -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="numero_factura" class="form-label">Número Factura</label>
+                            <input type="text" class="form-control" id="numero_factura" 
+                                   value="{{ factura.numero_factura if factura else 'Se generará automáticamente' }}" 
+                                   readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="fecha_emision" class="form-label">Fecha Emisión</label>
+                            <input type="date" class="form-control" id="fecha_emision" name="fecha_emision"
+                                   value="{{ factura.fecha_emision.strftime('%Y-%m-%d') if factura and factura.fecha_emision else '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="fecha_vencimiento" class="form-label">Fecha Vencimiento</label>
+                            <input type="date" class="form-control" id="fecha_vencimiento" name="fecha_vencimiento"
+                                   value="{{ factura.fecha_vencimiento.strftime('%Y-%m-%d') if factura and factura.fecha_vencimiento else '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="metodo_pago" class="form-label">Método de pago</label>
+                            <select class="form-select" id="metodo_pago" name="metodo_pago">
+                                <option value="">Seleccionar...</option>
+                                <option value="transferencia" {% if factura and factura.metodo_pago == 'transferencia' %}selected{% endif %}>Transferencia</option>
+                                <option value="tarjeta" {% if factura and factura.metodo_pago == 'tarjeta' %}selected{% endif %}>Tarjeta</option>
+                                <option value="efectivo" {% if factura and factura.metodo_pago == 'efectivo' %}selected{% endif %}>Efectivo</option>
+                                <option value="cheque" {% if factura and factura.metodo_pago == 'cheque' %}selected{% endif %}>Cheque</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- DETALLE DE FACTURA -->
+                    <div class="card mt-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h5><i class="fas fa-list me-2"></i>Detalle de Factura</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-bordered" id="tabla_detalle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="45%">Concepto / Servicio</th>
+                                        <th width="10%">Cantidad</th>
+                                        <th width="15%">Precio Unitario</th>
+                                        <th width="15%">Subtotal</th>
+                                        <th width="5%"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detalle_body">
+                                    {% if factura and factura.detalles %}
+                                        {% for detalle in factura.detalles %}
+                                        <tr>
+                                            <td>
+                                                <input type="text" class="form-control" name="concepto[]" 
+                                                       value="{{ detalle.concepto }}" required>
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control cantidad" name="cantidad[]" 
+                                                       value="{{ detalle.cantidad }}" min="1" step="1" required>
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control precio" name="precio_unitario[]" 
+                                                       value="{{ detalle.precio_unitario }}" min="0" step="0.01" required>
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control subtotal" name="subtotal[]" 
+                                                       value="{{ detalle.subtotal }}" readonly>
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-danger btn-sm eliminar-fila">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                    <!-- Fila por defecto -->
+                                    <tr>
+                                        <td>
+                                            <input type="text" class="form-control" name="concepto[]" 
+                                                   placeholder="Ej: Consultoría estratégica" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control cantidad" name="cantidad[]" 
+                                                   value="1" min="1" step="1" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control precio" name="precio_unitario[]" 
+                                                   value="0" min="0" step="0.01" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control subtotal" name="subtotal[]" 
+                                                   value="0" readonly>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-danger btn-sm eliminar-fila">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>TOTAL FACTURA:</strong></td>
+                                        <td>
+                                            <input type="number" class="form-control" id="total_factura" 
+                                                   name="total_factura" readonly>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                            
+                            <button type="button" class="btn btn-success btn-sm" id="agregar_fila">
+                                <i class="fas fa-plus me-2"></i>Añadir concepto
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Estado de pago -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="pagada" name="pagada"
+                                       {% if factura and factura.pagada %}checked{% endif %}>
+                                <label class="form-check-label" for="pagada">
+                                    <i class="fas fa-check-circle text-success me-1"></i>
+                                    Factura pagada
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="text-end mt-4">
+                        <a href="{{ url_for('listar_facturas') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>{{ 'Actualizar' if factura else 'Crear' }} Factura
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Actualizar cliente y responsable al seleccionar proyecto
+    const proyectoSelect = document.getElementById('proyecto_id');
+    const clienteInput = document.getElementById('cliente_readonly');
+    const responsableInput = document.getElementById('responsable_readonly');
+    
+    if (proyectoSelect) {
+        proyectoSelect.addEventListener('change', function() {
+            const selected = this.options[this.selectedIndex];
+            clienteInput.value = selected.dataset.cliente || '';
+            responsableInput.value = selected.dataset.responsable || '';
+        });
+    }
+
+    // Función para calcular subtotales y total
+    function calcularTotales() {
+        let total = 0;
+        document.querySelectorAll('#detalle_body tr').forEach(function(row) {
+            const cantidad = parseFloat(row.querySelector('.cantidad').value) || 0;
+            const precio = parseFloat(row.querySelector('.precio').value) || 0;
+            const subtotal = cantidad * precio;
+            
+            row.querySelector('.subtotal').value = subtotal.toFixed(2);
+            total += subtotal;
+        });
+        document.getElementById('total_factura').value = total.toFixed(2);
+    }
+
+    // Agregar nueva fila
+    document.getElementById('agregar_fila').addEventListener('click', function() {
+        const tbody = document.getElementById('detalle_body');
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td>
+                <input type="text" class="form-control" name="concepto[]" 
+                       placeholder="Ej: Consultoría estratégica" required>
+            </td>
+            <td>
+                <input type="number" class="form-control cantidad" name="cantidad[]" 
+                       value="1" min="1" step="1" required>
+            </td>
+            <td>
+                <input type="number" class="form-control precio" name="precio_unitario[]" 
+                       value="0" min="0" step="0.01" required>
+            </td>
+            <td>
+                <input type="number" class="form-control subtotal" name="subtotal[]" 
+                       value="0" readonly>
+            </td>
+            <td>
+                <button type="button" class="btn btn-danger btn-sm eliminar-fila">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(newRow);
+        
+        // Agregar eventos
+        newRow.querySelectorAll('.cantidad, .precio').forEach(input => {
+            input.addEventListener('input', calcularTotales);
+        });
+        newRow.querySelector('.eliminar-fila').addEventListener('click', function() {
+            if (document.querySelectorAll('#detalle_body tr').length > 1) {
+                this.closest('tr').remove();
+                calcularTotales();
+            } else {
+                alert('Debe haber al menos un concepto');
+            }
+        });
+    });
+
+    // Eventos para filas existentes
+    document.querySelectorAll('.cantidad, .precio').forEach(input => {
+        input.addEventListener('input', calcularTotales);
+    });
+    
+    document.querySelectorAll('.eliminar-fila').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (document.querySelectorAll('#detalle_body tr').length > 1) {
+                this.closest('tr').remove();
+                calcularTotales();
+            } else {
+                alert('Debe haber al menos un concepto');
+            }
+        });
+    });
+
+    // Calcular total inicial
+    calcularTotales();
+
+    // Validar antes de enviar
+    document.getElementById('facturaForm').addEventListener('submit', function(e) {
+        const total = parseFloat(document.getElementById('total_factura').value) || 0;
+        if (total <= 0) {
+            e.preventDefault();
+            alert('El total de la factura debe ser mayor a 0');
+            return false;
+        }
+        
+        let conceptosValidos = true;
+        document.querySelectorAll('input[name="concepto[]"]').forEach(input => {
+            if (!input.value.trim()) {
+                conceptosValidos = false;
+            }
+        });
+        
+        if (!conceptosValidos) {
+            e.preventDefault();
+            alert('Todos los conceptos deben tener descripción');
+            return false;
+        }
+    });
+
+    // Fecha por defecto
+    if (!document.getElementById('fecha_emision').value) {
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('fecha_emision').value = hoy;
+        
+        const vencimiento = new Date();
+        vencimiento.setDate(vencimiento.getDate() + 30);
+        document.getElementById('fecha_vencimiento').value = vencimiento.toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %}

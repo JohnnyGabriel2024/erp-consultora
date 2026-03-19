@@ -1,0 +1,39 @@
+# Entorno virtual
+venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.leeme.md
+
+# Base de datos
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Variables de entorno
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de migración (si usas alembic)
+migrations/
+
+# Logs
+*.log

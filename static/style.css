@@ -1,0 +1,115 @@
+ /* Estilos personalizados para tu ERP */
+:root {
+    --primary-color: #1a2b3c;
+    --secondary-color: #c9a959;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+}
+
+/* Ajustes generales */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Navbar personalizado */
+.navbar.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+/* Tarjetas del dashboard */
+.card.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+.card.bg-success {
+    background-color: var(--success-color) !important;
+}
+
+.card.bg-warning {
+    background-color: var(--secondary-color) !important;
+}
+
+.card.bg-info {
+    background-color: var(--info-color) !important;
+}
+
+/* Botones */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #0f1e2c;
+    border-color: #0f1e2c;
+}
+
+.btn-warning {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-warning:hover {
+    background-color: #b8943d;
+    border-color: #b8943d;
+    color: white;
+}
+
+/* Tablas */
+.table-hover tbody tr:hover {
+    background-color: rgba(201, 169, 89, 0.05);
+}
+
+/* Badges */
+.badge.bg-success {
+    background-color: var(--success-color) !important;
+}
+
+.badge.bg-warning {
+    background-color: var(--secondary-color) !important;
+    color: white;
+}
+
+.badge.bg-info {
+    background-color: var(--info-color) !important;
+}
+
+/* Animaciones */
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Formularios */
+.form-control:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.2rem rgba(201, 169, 89, 0.25);
+}
+
+/* Login */
+.card-header.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .card-title {
+        font-size: 1rem;
+    }
+    
+    .table {
+        font-size: 0.9rem;
+    }
+}

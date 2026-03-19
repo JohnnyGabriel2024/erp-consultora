@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if cliente else 'Nuevo' }} Cliente{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-{{ 'edit' if cliente else 'plus' }} me-2"></i>
+                    {{ 'Editar' if cliente else 'Nuevo' }} Cliente
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="nombre_empresa" class="form-label">Nombre de la Empresa *</label>
+                        <input type="text" class="form-control" id="nombre_empresa" name="nombre_empresa" 
+                               value="{{ cliente.nombre_empresa if cliente else '' }}" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="contacto" class="form-label">Persona de Contacto</label>
+                            <input type="text" class="form-control" id="contacto" name="contacto" 
+                                   value="{{ cliente.contacto if cliente else '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ cliente.email if cliente else '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono" 
+                                   value="{{ cliente.telefono if cliente else '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="direccion" class="form-label">Dirección</label>
+                        <textarea class="form-control" id="direccion" name="direccion" rows="3">{{ cliente.direccion if cliente else '' }}</textarea>
+                    </div>
+                    
+                    <div class="text-end">
+                        <a href="{{ url_for('listar_clientes') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

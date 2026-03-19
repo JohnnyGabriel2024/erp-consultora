@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-chart-line me-2"></i>Dashboard</h2>
+        <p class="text-muted">Bienvenido, {{ current_user.nombre }}</p>
+    </div>
+</div>
+
+<!-- TARJETAS DE ESTADÍSTICAS -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Clientes</h6>
+                        <h2 class="mb-0">{{ total_clientes }}</h2>
+                    </div>
+                    <i class="fas fa-users fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Proyectos</h6>
+                        <h2 class="mb-0">{{ total_proyectos }}</h2>
+                        <small>{{ proyectos_activos }} activos</small>
+                    </div>
+                    <i class="fas fa-project-diagram fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Facturas</h6>
+                        <h2 class="mb-0">{{ total_facturas }}</h2>
+                        <small>{{ facturas_pendientes }} pendientes</small>
+                    </div>
+                    <i class="fas fa-file-invoice fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Cobrado/Pendiente</h6>
+                        <h2 class="mb-0">${{ "{:,.0f}".format(monto_pagado_reciente) }}</h2>
+                        <small>${{ "{:,.0f}".format(monto_pendiente_reciente) }} pendiente</small>
+                    </div>
+                    <i class="fas fa-dollar-sign fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GRÁFICOS -->
+<div class="row mb-4">
+    <!-- Gráfico 1: Facturación mensual -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar me-2"></i>Facturación Mensual</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="chartFacturacionMensual" style="width:100%; max-height:300px;"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráfico 2: Estado Facturas -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-pie me-2"></i>Estado Facturas (30 días)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="chartEstadoFacturas" style="width:100%; max-height:200px;"></canvas>
+                <div class="row text-center mt-3">
+                    <div class="col-6">
+                        <span class="badge bg-success">Pagadas: {{ pagadas_recientes }}</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="badge bg-warning">Pendientes: {{ pendientes_recientes }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MÁS GRÁFICOS -->
+<div class="row mb-4">
+    <!-- Gráfico 3: Top clientes -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-trophy me-2"></i>Top 5 Clientes por Facturación</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="chartTopClientes" style="width:100%; max-height:250px;"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráfico 4: Proyectos por estado -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-tasks me-2"></i>Proyectos por Estado</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="chartProyectosEstado" style="width:100%; max-height:250px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PROYECTOS RECIENTES -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history me-2"></i>Proyectos Recientes</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Proyecto</th>
+                                <th>Cliente</th>
+                                <th>Responsable</th>
+                                <th>Estado</th>
+                                <th>Inicio</th>
+                                <th>Presupuesto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for proyecto in proyectos_recientes %}
+                            <tr>
+                                <td>{{ proyecto.nombre }}</td>
+                                <td>{{ proyecto.cliente.nombre_empresa }}</td>
+                                <td>{{ proyecto.responsable.nombre }}</td>
+                                <td>
+                                    {% if proyecto.estado == 'activo' %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% elif proyecto.estado == 'completado' %}
+                                        <span class="badge bg-info">Completado</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ proyecto.estado }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ proyecto.fecha_inicio.strftime('%d/%m/%Y') }}</td>
+                                <td>${{ "{:,.2f}".format(proyecto.presupuesto) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Cargando gráficos...");
+    
+    // Verificar que Chart.js está disponible
+    if (typeof Chart === 'undefined') {
+        console.error("Chart.js no está cargado!");
+        return;
+    }
+    
+    // ============================================
+    // GRÁFICO 1: Facturación Mensual
+    // ============================================
+    const ctx1 = document.getElementById('chartFacturacionMensual');
+    if (ctx1) {
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: {{ meses|tojson }},
+                datasets: [{
+                    label: 'Monto Facturado ($)',
+                    data: {{ montos_mensuales|tojson }},
+                    backgroundColor: 'rgba(26, 43, 60, 0.7)',
+                    borderColor: 'rgba(26, 43, 60, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // GRÁFICO 2: Estado Facturas
+    // ============================================
+    const ctx2 = document.getElementById('chartEstadoFacturas');
+    if (ctx2) {
+        new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pagadas', 'Pendientes'],
+                datasets: [{
+                    data: [{{ pagadas_recientes }}, {{ pendientes_recientes }}],
+                    backgroundColor: ['#28a745', '#ffc107'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // GRÁFICO 3: Top Clientes
+    // ============================================
+    const ctx3 = document.getElementById('chartTopClientes');
+    if (ctx3) {
+        new Chart(ctx3, {
+            type: 'bar',
+            data: {
+                labels: {{ nombres_clientes|tojson }},
+                datasets: [{
+                    label: 'Facturación ($)',
+                    data: {{ montos_clientes|tojson }},
+                    backgroundColor: 'rgba(201, 169, 89, 0.7)',
+                    borderColor: 'rgba(201, 169, 89, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // GRÁFICO 4: Proyectos por Estado
+    // ============================================
+    const ctx4 = document.getElementById('chartProyectosEstado');
+    if (ctx4) {
+        new Chart(ctx4, {
+            type: 'pie',
+            data: {
+                labels: {{ estados_proyecto|tojson }},
+                datasets: [{
+                    data: {{ cantidades_proyecto|tojson }},
+                    backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#6c757d'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
